@@ -4,15 +4,13 @@ import (
 	"github.com/di-wu/parser"
 	"github.com/di-wu/parser/ast"
 	"github.com/di-wu/parser/op"
-	"github.com/scim2/filter-parser/v2/internal/types"
+	typ "github.com/scim2/filter-parser/v2/internal/types"
 )
 
 func ValueFilter(p *ast.Parser) (*ast.Node, error) {
-	return p.Expect(op.Or{
+	return p.Expect(
 		ValueLogExpOr,
-		ValueLogExpAnd,
-		AttrExp,
-	})
+	)
 }
 
 func ValueFilterAll(p *ast.Parser) (*ast.Node, error) {
@@ -38,30 +36,34 @@ func ValueFilterNot(p *ast.Parser) (*ast.Node, error) {
 	})
 }
 
-func ValueLogExpAnd(p *ast.Parser) (*ast.Node, error) {
-	return p.Expect(ast.Capture{
-		Type:        typ.ValueLogExpAnd,
-		TypeStrings: typ.Stringer,
-		Value: op.And{
-			AttrExp,
-			op.MinZero(SP),
-			parser.CheckStringCI("and"),
-			op.MinZero(SP),
-			AttrExp,
-		},
-	})
-}
-
 func ValueLogExpOr(p *ast.Parser) (*ast.Node, error) {
 	return p.Expect(ast.Capture{
 		Type:        typ.ValueLogExpOr,
 		TypeStrings: typ.Stringer,
 		Value: op.And{
-			AttrExp,
-			op.MinZero(SP),
-			parser.CheckStringCI("or"),
-			op.MinZero(SP),
-			AttrExp,
+			ValueLogExpAnd,
+			op.MinZero(op.And{
+				op.MinZero(SP),
+				parser.CheckStringCI("or"),
+				op.MinZero(SP),
+				ValueLogExpAnd,
+			}),
+		},
+	})
+}
+
+func ValueLogExpAnd(p *ast.Parser) (*ast.Node, error) {
+	return p.Expect(ast.Capture{
+		Type:        typ.ValueLogExpAnd,
+		TypeStrings: typ.Stringer,
+		Value: op.And{
+			FilterValue,
+			op.MinZero(op.And{
+				op.MinZero(SP),
+				parser.CheckStringCI("and"),
+				op.MinZero(SP),
+				FilterValue,
+			}),
 		},
 	})
 }

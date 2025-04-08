@@ -4,7 +4,7 @@ import (
 	"github.com/di-wu/parser"
 	"github.com/di-wu/parser/ast"
 	"github.com/scim2/filter-parser/v2/internal/grammar"
-	"github.com/scim2/filter-parser/v2/internal/types"
+	typ "github.com/scim2/filter-parser/v2/internal/types"
 )
 
 // ParseValuePath parses the given raw data as an ValuePath.
@@ -34,39 +34,75 @@ func parseValuePath(raw []byte, c config) (ValuePath, error) {
 
 func (p config) parseValueFilter(node *ast.Node) (Expression, error) {
 	switch t := node.Type; t {
-	case typ.ValueLogExpOr, typ.ValueLogExpAnd:
+	case typ.ValueLogExpOr:
 		children := node.Children()
-		if l := len(children); l != 2 {
-			return nil, invalidLengthError(node.Type, 2, l)
+		if len(children) == 0 {
+			return nil, invalidLengthError(typ.ValueLogExpOr, 1, 0)
 		}
 
-		left, err := p.parseAttrExp(children[0])
-		if err != nil {
-			return nil, err
-		}
-		right, err := p.parseAttrExp(children[1])
-		if err != nil {
-			return nil, err
+		if len(children) == 1 {
+			return p.parseValueFilter(children[0])
 		}
 
-		var operator LogicalOperator
-		if node.Type == typ.ValueLogExpOr {
-			operator = OR
-		} else {
-			operator = AND
+		var or LogicalExpression
+		for _, node := range children {
+			exp, err := p.parseValueFilter(node)
+			if err != nil {
+				return nil, err
+			}
+			switch {
+			case or.Left == nil:
+				or.Left = exp
+			case or.Right == nil:
+				or.Right = exp
+				or.Operator = OR
+			default:
+				or = LogicalExpression{
+					Left: &LogicalExpression{
+						Left:     or.Left,
+						Right:    or.Right,
+						Operator: OR,
+					},
+					Right:    exp,
+					Operator: OR,
+				}
+			}
+		}
+		return &or, nil
+	case typ.ValueLogExpAnd:
+		children := node.Children()
+		if len(children) == 0 {
+			return nil, invalidLengthError(typ.FilterAnd, 1, 0)
 		}
 
-		return &LogicalExpression{
-			Left:     &left,
-			Right:    &right,
-			Operator: operator,
-		}, nil
-	case typ.AttrExp:
-		attrExp, err := p.parseAttrExp(node)
-		if err != nil {
-			return nil, err
+		if len(children) == 1 {
+			return p.parseFilterValue(children[0])
 		}
-		return &attrExp, nil
+		var and LogicalExpression
+		for _, node := range children {
+			exp, err := p.parseFilterValue(node)
+			if err != nil {
+				return nil, err
+			}
+			switch {
+			case and.Left == nil:
+				and.Left = exp
+			case and.Right == nil:
+				and.Right = exp
+				and.Operator = AND
+			default:
+				and = LogicalExpression{
+					Left: &LogicalExpression{
+						Left:     and.Left,
+						Right:    and.Right,
+						Operator: AND,
+					},
+					Right:    exp,
+					Operator: AND,
+				}
+			}
+		}
+		return &and, nil
 	case typ.ValueFilterNot:
 		children := node.Children()
 		if l := len(children); l != 1 {
