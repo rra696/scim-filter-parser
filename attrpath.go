@@ -1,11 +1,12 @@
 package filter
 
 import (
+	"strings"
+
 	"github.com/di-wu/parser"
 	"github.com/di-wu/parser/ast"
-	"github.com/scim2/filter-parser/v2/internal/grammar"
-	"github.com/scim2/filter-parser/v2/internal/types"
-	"strings"
+	"github.com/rra696/scim-filter-parser/v2/internal/grammar"
+	typ "github.com/rra696/scim-filter-parser/v2/internal/types"
 )
 
 // ParseAttrPath parses the given raw data as an AttributePath.

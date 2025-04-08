@@ -3,12 +3,13 @@ package filter
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/di-wu/parser"
-	"github.com/di-wu/parser/ast"
-	"github.com/scim2/filter-parser/v2/internal/grammar"
-	"github.com/scim2/filter-parser/v2/internal/types"
 	"strconv"
 	"strings"
+
+	"github.com/di-wu/parser"
+	"github.com/di-wu/parser/ast"
+	"github.com/rra696/scim-filter-parser/v2/internal/grammar"
+	typ "github.com/rra696/scim-filter-parser/v2/internal/types"
 )
 
 // ParseAttrExp parses the given raw data as an AttributeExpression.

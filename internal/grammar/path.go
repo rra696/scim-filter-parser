@@ -3,7 +3,7 @@ package grammar
 import (
 	"github.com/di-wu/parser/ast"
 	"github.com/di-wu/parser/op"
-	"github.com/scim2/filter-parser/v2/internal/types"
+	typ "github.com/rra696/scim-filter-parser/v2/internal/types"
 )
 
 func Path(p *ast.Parser) (*ast.Node, error) {
